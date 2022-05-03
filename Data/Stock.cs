@@ -36,5 +36,12 @@ namespace ProjectInvestClient
 
         public virtual ICollection<Order> Order { get; set; }
 
+        public override string ToString()
+        {
+            return "Stock ID: " + StockID + " Stock Name: " + StockName + " Stock Ticker: " + StockTicker + " Stock Price: " + StockPrice + " Sell Price: " +SellPrice+ " Total Shares: " + TotalShares + "\n";
+        }
+
     }
+
+
 }
