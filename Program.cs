@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
-
+using System.Text.Json.Nodes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ProjectInvestClient
 {
@@ -14,6 +16,7 @@ namespace ProjectInvestClient
         static void Main(string[] args)
         {
             GetsAsync().Wait();
+            
         }
 
         static async Task GetsAsync()                         // async methods return Task or Task<T>
@@ -72,6 +75,19 @@ namespace ProjectInvestClient
                         Console.WriteLine(response.StatusCode + " " + response.ReasonPhrase);
                     }
 
+                    // Delete stock with ID 4
+                    Console.WriteLine("Deleting Stock with id 11");
+                    response = await client.DeleteAsync("APIStocks/11");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Print delete was a success
+                        Console.WriteLine("Successfully deleted Stock with id 11");
+                    }
+                    else
+                    {
+                        Console.WriteLine(response.StatusCode + " " + response.ReasonPhrase);
+                    }
+
 
                 }
             }
@@ -80,6 +96,52 @@ namespace ProjectInvestClient
                 Console.WriteLine(e.ToString());
                 
             }
+
+            // Print stock current price
+            
+            try
+            {
+                
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("https://yfapi.net/");
+                    httpClient.DefaultRequestHeaders.Add("X-API-KEY",
+                        "ZFQ4vi02Lh8CgPerjwv6C2ETLvRr6F8i3EIonNXH");
+                    httpClient.DefaultRequestHeaders.Add("accept",
+                        "application/json");
+
+                    var response = await httpClient.GetAsync(
+                    "/v6/finance/quote?symbols=AAPL");
+                    //"v11/finance/quoteSummary/AAPL?lang=en&region=US&modules=defaultKeyStatistics%2CassetProfile");
+                    
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)                                                   
+                    {
+
+                        dynamic stockInfos = JObject.Parse(responseBody);
+                        string currentStockPrice = stockInfos.quoteResponse.result[0].ask;
+                        Console.WriteLine("The current stock price is: {0} $",currentStockPrice);
+
+                    }
+
+                   
+                    else
+                    {
+                        Console.WriteLine(response.StatusCode + " " + response.ReasonPhrase);
+                    }
+
+                   
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+
+            }
+
+
         }
 
     }
