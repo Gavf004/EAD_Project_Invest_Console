@@ -8,11 +8,17 @@ using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using EAD_Project_Invest_Console.Data;
 
 namespace ProjectInvestClient
 {
     class Client
     {
+        //public static float stockValue = 0;
+        //public static List<String> tickers = new List<string>();
+        //public static List<float> number_of_shares = new List<float>();
+        public static float stockValue;
+
         static void Main(string[] args)
         {
             GetsAsync().Wait();
@@ -25,7 +31,8 @@ namespace ProjectInvestClient
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri("http://localhost:5204/api/");
+                    //"http://localhost:5204/api/"
+                    client.BaseAddress = new Uri("https://eadcaprojectinvest20220510165713.azurewebsites.net/api/"); 
 
                     // add an Accept header for JSON
                     client.DefaultRequestHeaders.
@@ -41,7 +48,15 @@ namespace ProjectInvestClient
                         foreach (var stock in stocks)
                         {
                             Console.WriteLine(stock);
+                            //tickers.Add(stock.StockName);
+                            //.Add(stock.TotalShares);
+                            string price = await GetStockPrice(stock.StockTicker);
+                            Console.WriteLine("The current stock price is: {0} $", price);
+                            stockValue += stock.TotalShares * float.Parse(price);
+
                         }
+                        Console.WriteLine("The portfolio value is: {0} $\n", stockValue);
+                        
                     }
                     else
                     {
@@ -64,7 +79,7 @@ namespace ProjectInvestClient
 
                     // Test POST to create Stock
                     Console.WriteLine("Add new Stock");
-                    Stock s1 = new Stock() { StockName = "Facebook",  StockTicker = "F", StockPrice = 50, SellPrice =0, TotalShares =5, ExchangeName="NASDAQ" };
+                    Stock s1 = new Stock() { StockName = "Ford",  StockTicker = "F", StockPrice = 50, SellPrice =0, TotalShares =5, ExchangeName="NASDAQ" };
                     response = await client.PostAsJsonAsync("APIStocks", s1);
                     if (response.IsSuccessStatusCode)
                     {
@@ -96,12 +111,23 @@ namespace ProjectInvestClient
                 Console.WriteLine(e.ToString());
                 
             }
+           
 
-            // Print stock current price
-            
+
+
+
+
+        }
+    
+        // Method to access Yahoo api and retrieve regular market price.
+    public static async Task<String> GetStockPrice(string name)
+        {
+            string Name = name;
+            string base1 = "/v6/finance/quote?symbols=";
+            string queryString = base1+Name;
             try
             {
-                
+
                 using (HttpClient httpClient = new HttpClient())
                 {
                     httpClient.BaseAddress = new Uri("https://yfapi.net/");
@@ -111,26 +137,30 @@ namespace ProjectInvestClient
                         "application/json");
 
                     var response = await httpClient.GetAsync(
-                    "/v6/finance/quote?symbols=AAPL");
+                    queryString);
+                    //"/v6/finance/quote?symbols={Name}"
                     //"v11/finance/quoteSummary/AAPL?lang=en&region=US&modules=defaultKeyStatistics%2CassetProfile");
-                    
+
                     var responseBody = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode)                                                   
+                    if (response.IsSuccessStatusCode)
                     {
 
                         dynamic stockInfos = JObject.Parse(responseBody);
-                        string currentStockPrice = stockInfos.quoteResponse.result[0].ask;
-                        Console.WriteLine("The current stock price is: {0} $",currentStockPrice);
+                        //Console.WriteLine(stockInfos);
+                        string currentStockPrice = stockInfos.quoteResponse.result[0].regularMarketPrice;
+                        return currentStockPrice;
+                        //Console.WriteLine("The current stock price is: {0} $", currentStockPrice);
 
                     }
 
-                   
+
                     else
                     {
                         Console.WriteLine(response.StatusCode + " " + response.ReasonPhrase);
+                        return null;
                     }
 
-                   
+
 
 
                 }
@@ -138,11 +168,10 @@ namespace ProjectInvestClient
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-
+                return null;
             }
-
-
         }
+
 
     }
 }
