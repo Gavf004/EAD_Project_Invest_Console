@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json.Nodes;
-using Newtonsoft.Json;
+﻿using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
-using EAD_Project_Invest_Console.Data;
 
 namespace ProjectInvestClient
 {
@@ -22,6 +13,7 @@ namespace ProjectInvestClient
         static void Main(string[] args)
         {
             GetsAsync().Wait();
+            GetsAsyncUsers().Wait();
             
         }
 
@@ -31,7 +23,7 @@ namespace ProjectInvestClient
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    //"http://localhost:5204/api/"
+                    //client.BaseAddress = new Uri("http://localhost:5204/api/"); //Uncomment to use local server
                     client.BaseAddress = new Uri("https://eadcaprojectinvest20220510165713.azurewebsites.net/api/"); 
 
                     // add an Accept header for JSON
@@ -118,9 +110,53 @@ namespace ProjectInvestClient
 
 
         }
-    
-        // Method to access Yahoo api and retrieve regular market price.
-    public static async Task<String> GetStockPrice(string name)
+
+
+
+        static async Task GetsAsyncUsers()                         // async methods return Task or Task<T>
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    //client.BaseAddress = new Uri("http://localhost:5204/api/"); //Uncomment to use local server
+                    client.BaseAddress = new Uri("https://eadcaprojectinvest20220510165713.azurewebsites.net/api/"); // Uncomment to use Azure
+
+                    // add an Accept header for JSON
+                    client.DefaultRequestHeaders.
+                        Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));            // or application/xml
+
+                    // GET ../Users/all
+                    // get all Users in DB
+                    HttpResponseMessage response = await client.GetAsync("APIUser");              // async call, await suspends until task finished            
+                    if (response.IsSuccessStatusCode)                                                   // 200.299
+                    {
+                        // read results 
+                        var Users = await response.Content.ReadAsAsync<IEnumerable<User>>();
+                        foreach (var user in Users)
+                        {
+                            Console.WriteLine(user);
+
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine(response.StatusCode + " " + response.ReasonPhrase);
+                    }
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+
+            }
+        }
+        
+            // Method to access Yahoo api and retrieve regular market price.
+            public static async Task<String> GetStockPrice(string name)
         {
             string Name = name;
             string base1 = "/v6/finance/quote?symbols=";

@@ -29,5 +29,12 @@ namespace ProjectInvestClient
         // navigation properties
 
         public virtual ICollection<Order> Order { get; set; }
+
+        public override string ToString()
+        {
+            return "User ID: " + UserID + " Name: " + Name + " User Type: " + UserType + " Email: " + Email + "\n";
+        }
+
+
     }
 }
